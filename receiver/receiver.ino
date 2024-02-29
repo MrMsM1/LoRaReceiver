@@ -20,7 +20,7 @@ const char* serverAddress = "http://192.168.8.187:30001";
 const char *mqtt_broker = "192.168.235.221";
 const char *topic = "senderState";
 const char *topic2 = "data";
-const char *topic0 = "Connected"
+const char *topic0 = "Connected";
 //const char *mqtt_username = "emqx";
 //const char *mqtt_password = "public";
 const int mqtt_port = 1883;
@@ -74,7 +74,7 @@ void setup() {
       }
   }
   // Publish and subscribe
-  client.publish(topic0, "Hi, I'm ESP32 R1 ^^");
+  client.publish(topic0, "Hi, I'm ESP32 R2 ^^");
   client.subscribe(topic);
   
 }
@@ -105,9 +105,8 @@ void callback(char *topic, byte *payload, unsigned int length) {
         }
 
         // Extract state and comment
-        bool state = doc["state"];  
-        comment = doc["Comment"].as<String>();
-
+        bool state = doc["senderState"];  
+        comment = doc["comment"].as<String>();
         // Set senderState based on the received state
         senderState = state;
 
@@ -125,7 +124,7 @@ void sendMessage(){
 
   // Sending LoRa packet to receiver
   LoRa.beginPacket();
-  LoRa.print("{\"Data\":\"R1 \",\"Comment\":\"" + String(comment) + "\"}");
+  LoRa.print("{\"Data\":\"R2 \",\"Comment\":\"" + String(comment) + "\"}");
   LoRa.endPacket();
   counter++;
 }
@@ -133,8 +132,8 @@ void loop() {
   client.loop();
   onReceive(LoRa.parsePacket());
   if(senderState){
+    delay(0);
     sendMessage();
-    delay(1000);
     senderState = false;
   }
 }
@@ -149,7 +148,7 @@ void onReceive(int packetSize) {
 
   
 
-  Serial.print("RCV2: ");
+  Serial.print("RCV1: ");
     String LoRaData;
     // Reading packet
     while (LoRa.available()) {
@@ -172,8 +171,8 @@ void onReceive(int packetSize) {
       return;
     }
 
-    char dataToSend[1024]; // Assuming a reasonable buffer size
-    sprintf(dataToSend, "{\"Data\":\"%sto R1\",\"RSSI\":\"%d\",\"Comment\":\"%s\"}", doc["Data"].as<const char*>(), LoRa.packetRssi(), doc["Comment"].as<const char*>());
+    char dataToSend[255]; // Assuming a reasonable buffer size
+    sprintf(dataToSend, "{\"Data\":\"%sto R2\",\"RSSI\":\"%d\",\"Comment\":\"%s\"}", doc["Data"].as<const char*>(), LoRa.packetRssi(), doc["Comment"].as<const char*>());
 
         
     //    Serial.println("Data: " + stringdataToSend);
