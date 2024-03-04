@@ -16,8 +16,9 @@ String comment;
 const char* ssid = "Hello";
 const char* password = "12345678";
 const char* serverAddress = "http://192.168.8.187:30001";
-
-const char *mqtt_broker = "192.168.235.221";
+long lastSendTime = 0;        // last send time
+int interval = 2000;
+const char *mqtt_broker = "192.168.231.221";
 const char *topic = "senderState";
 const char *topic2 = "data";
 const char *topic0 = "Connected";
@@ -109,6 +110,9 @@ void callback(char *topic, byte *payload, unsigned int length) {
         comment = doc["comment"].as<String>();
         // Set senderState based on the received state
         senderState = state;
+        if(senderState){
+          lastSendTime = millis();
+        }
 
         Serial.println("Setting senderState to: " + String(senderState));
     }
@@ -119,20 +123,20 @@ void callback(char *topic, byte *payload, unsigned int length) {
 
 
 void sendMessage(){
-  Serial.print("Sending packet: ");
+  Serial.print("Sender Sending packet: ");
   Serial.println(counter);
-
+  Serial.println(comment);
   // Sending LoRa packet to receiver
   LoRa.beginPacket();
   LoRa.print("{\"Data\":\"R2 \",\"Comment\":\"" + String(comment) + "\"}");
-  LoRa.endPacket();
+  LoRa.endPacket(true);
   counter++;
+  Serial.println("send completed");
 }
 void loop() {
   client.loop();
   onReceive(LoRa.parsePacket());
-  if(senderState){
-    delay(0);
+  if (millis() - lastSendTime > interval && senderState) {
     sendMessage();
     senderState = false;
   }
@@ -148,7 +152,7 @@ void onReceive(int packetSize) {
 
   
 
-  Serial.print("RCV1: ");
+  Serial.print("RCV2: ");
     String LoRaData;
     // Reading packet
     while (LoRa.available()) {
